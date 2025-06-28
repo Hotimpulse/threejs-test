@@ -1,8 +1,8 @@
 import styles from "./index.module.css";
 import { Canvas } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
 import { useSpring, animated } from "@react-spring/web";
 import { useInView } from "react-intersection-observer";
+import { Text } from "@react-three/drei";
 
 const headings = [
     {
@@ -27,10 +27,9 @@ const headings = [
 
 function Heading3D({ text, color }: { text: string; color: string }) {
     return (
-        <mesh>
-            <textGeometry args={[text, { size: 1, height: 0.2 }]} />
-            <meshStandardMaterial color={color} />
-        </mesh>
+        <Text position={[0, 0, 0]} fontSize={0.7} color={color} anchorX="center" anchorY="middle">
+            {text}
+        </Text>
     );
 }
 
@@ -40,67 +39,49 @@ function AnimatedSection({
     color,
     flyFrom,
     index,
-    inView,
-    prevInView,
 }: {
     heading: string;
     description: string;
     color: string;
     flyFrom: "left" | "right" | "bottom";
     index: number;
-    inView: boolean;
-    prevInView: boolean;
 }) {
-    // Animate in for current, fade out for previous
+    const [ref, inView] = useInView({ triggerOnce: false, threshold: 0.5 });
     const spring = useSpring({
         from:
             flyFrom === "left"
-                ? { x: -100, opacity: 0 }
+                ? { tx: -100, ty: 0, opacity: 0 }
                 : flyFrom === "right"
-                ? { x: 100, opacity: 0 }
-                : { y: 100, opacity: 0 },
-        to: inView ? { x: 0, y: 0, opacity: 1 } : { x: 0, y: 0, opacity: 0 },
+                ? { tx: 100, ty: 0, opacity: 0 }
+                : { tx: 0, ty: 100, opacity: 0 },
+        to: inView
+            ? { tx: 0, ty: 0, opacity: 1 }
+            : flyFrom === "left"
+            ? { tx: -100, ty: 0, opacity: 0 }
+            : flyFrom === "right"
+            ? { tx: 100, ty: 0, opacity: 0 }
+            : { tx: 0, ty: 100, opacity: 0 },
         config: { tension: 120, friction: 20 },
     });
 
     return (
-        <section className={`${styles.section} ${styles[`section${index}`]}`}>
+        <section ref={ref} className={`${styles.section} ${styles[`section${index}`]}`}>
             <div className={styles.canvasWrapper}>
                 <Canvas camera={{ position: [0, 0, 5], fov: 60 }}>
                     <ambientLight />
                     <directionalLight position={[0, 5, 5]} />
-                    <Html center>
-                        <animated.h1
-                            style={
-                                flyFrom === "left" || flyFrom === "right"
-                                    ? {
-                                          transform: spring.x.to((x) => `translateX(${x}px)`),
-                                          opacity: spring.opacity,
-                                          color,
-                                          fontSize: "3rem",
-                                          margin: 0,
-                                      }
-                                    : {
-                                          transform: spring.y.to((y) => `translateY(${y}px)`),
-                                          opacity: spring.opacity,
-                                          color,
-                                          fontSize: "3rem",
-                                          margin: 0,
-                                      }
-                            }
-                        >
-                            {heading}
-                        </animated.h1>
-                    </Html>
+                    <Heading3D text={heading} color={color} />
                 </Canvas>
             </div>
             <animated.div
                 className={styles.text}
-                style={
-                    flyFrom === "left" || flyFrom === "right"
-                        ? { transform: spring.x.to((x) => `translateX(${x}px)`), opacity: spring.opacity }
-                        : { transform: spring.y.to((y) => `translateY(${y}px)`), opacity: spring.opacity }
-                }
+                style={{
+                    transform:
+                        flyFrom === "left" || flyFrom === "right"
+                            ? spring.tx.to((x) => `translateX(${x}px)`)
+                            : spring.ty.to((y) => `translateY(${y}px)`),
+                    opacity: spring.opacity,
+                }}
             >
                 <p>{description}</p>
             </animated.div>
@@ -109,8 +90,6 @@ function AnimatedSection({
 }
 
 export default function App() {
-    const [refs, inViews] = headings.map(() => useInView({ triggerOnce: false, threshold: 0.5 }));
-
     return (
         <div className={styles.main}>
             {headings.map((h, i) => (
@@ -121,8 +100,6 @@ export default function App() {
                     color={h.color}
                     flyFrom={h.flyFrom as "left" | "right" | "bottom"}
                     index={i}
-                    inView={inViews[i]}
-                    prevInView={i > 0 ? inViews[i - 1] : false}
                 />
             ))}
         </div>
