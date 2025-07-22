@@ -1,0 +1,24 @@
+.main_container {
+    display: flex;
+    margin-top: 10rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.card {
+    display: flex;
+    width: 20rem;
+    height: 12rem;
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 0.2rem;
+    background-color: rgba(0, 255, 255, 0.301);
+    cursor: pointer;
+    box-shadow: 1px 1px 12px 12px rgba(0, 0, 0, 0.473);
+    animation: all 0.3s ease-in-out;
+    &:hover {
+        transition: all 0.3s ease-in-out;
+        background-color: red;
+    }
+}
